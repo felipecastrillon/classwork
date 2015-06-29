@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include "graph.h"
+
+/*------------------------------------------------------------------------------
+-------------Declare a Graph abstract data type and initialize to default
+------------------------------------------------------------------------------*/
+
+Graph *GraphCreate(int nvert){
+    
+    float *m;
+    int i;
+    Graph *h = (Graph *) malloc(sizeof(Graph));
+    h->links = (float*) malloc(nvert*nvert* sizeof(float)); /* table of neighbors */
+    
+    m = h->links;
+    for (i=0; i<nvert*nvert; i++)
+        *m++ = GRAPH_EMPTY;
+    printf ("success at creating graph structure\n");
+    return h;  
+}
+
+/*------------------------------------------------------------------------------
+-------------Get links 
+------------------------------------------------------------------------------*/
+
+void GraphGetLinks(int nvert, int parent, int child, float cost, Graph *h){
+    int location = (parent-1)*(nvert) + (child-1);
+    printf("saving %f in location %d, parent %d, child %d\n",cost,location,parent,child);
+    h->links[location] = cost;
+}
+
+/*------------------------------------------------------------------------------
+-------------Free memory of Graph abstract data type
+------------------------------------------------------------------------------*/
+
+void GraphDestroy(Graph *h){
+    free(h->links);
+    free(h);    
+}
+/*------------------------------------------------------------------------------
+-------------Print graph
+------------------------------------------------------------------------------*/
+
+void PrintGraph(Graph *h, int nvert){
+    printf("\n\nprint graph:\n");
+    int i,j;
+    for (i=0; i<nvert; i++){
+        printf("\nvertex %d neighbor costs:\n",i+1);   
+        for (j=0; j<nvert; j++){
+            if (h->links[(i)*(nvert) + (j)] >0)
+                printf("v%d: %f, ", j+1,h->links[(i)*(nvert) + (j)]);
+        }
+    }
+    printf("\ndone printing:\n\n");
+} 

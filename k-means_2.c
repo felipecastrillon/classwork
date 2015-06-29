@@ -1,0 +1,187 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include <unistd.h>
+#define BUFSIZE 1024 //max line size
+#include "list.h"
+#include <math.h>
+
+struct Data {
+		float col_a, col_b;
+		int kclus;
+		struct Data *next;
+};
+typedef struct Data Node;
+
+Node *addData(float first, float second, int cluster){
+       Node *tp;
+       tp = (struct Data *)malloc(sizeof(struct Data));  
+       tp->col_a = first;
+       tp->col_b = second;
+       tp->kclus = cluster;
+       tp->next = NULL;
+       return tp;
+}
+
+void append(Node *head, Node *node){
+     
+     Node *tmp1 = head; 
+     //Node *tmp2 = node;
+     //printf("node %lf, %lf, %d\n", head->col_one,head->col_two,head->kclus);
+     
+     if(head->next == NULL){
+        //printf("head is null\n");
+        head->next = node; 
+     }else{
+          //printf("head is not null\n"); 
+          while(tmp1->next){
+              tmp1 = tmp1->next;
+              
+          }
+          tmp1->next = node;
+     }     
+     //printf("get out of here\n");
+
+}
+
+int kmeans(Node *head, float *means_a, float *means_b, int num, 
+                float *x_sum, float *y_sum, int *x_num,int *y_num){
+    
+    
+    //Node *node = (Node *)malloc(sizeof(Node));
+    Node *node = head;
+    do{
+
+        node = node->next;   
+        printf("node is %f %f, num of clus is %d\n", node->col_a,node->col_b,num);
+        float dist,min_dist = 1000;
+        int clust;
+        int i;
+        for (i=1;i<=num;i++){
+            printf("iteration is %d, means is %f %f\n", i, means_a[i],means_b[i]); getchar();
+            dist = pow((pow(node->col_a - means_a[i],2) + pow(node->col_a - means_a[i],2)),.5);   
+            if (dist < min_dist){
+               min_dist = dist;
+               clust = i;         
+            }
+                    
+        }
+          
+        x_sum[clust] += node->col_a;
+        y_sum[clust] += node->col_b;
+        x_num[clust]++;
+        y_num[clust]++;
+        
+        printf("chosen cluster is %d, sum %f, num %d\n",clust, x_sum[clust],x_num[clust]);
+    
+    }while(node->next != NULL);
+}
+
+
+int main (){
+    char file[50];//name of file
+    int nclus;//number of clusters
+    char line[BUFSIZE];
+    //float *Cone, *Ctwo, *temp, *temp2;
+    
+    //get name of file to open
+    printf("what is the name of your file?");    
+    if (scanf("%s", &file) != 1){ //read in value and make sure it is valid name
+               printf("error: filemane invalid!\n");
+               exit(EXIT_FAILURE); 
+    }
+    printf("filename is %s\n", file);
+    
+    //get number of clusters
+    printf("how many clusters do you want to find?"); 
+     if (scanf("%d", &nclus) != 1){ //read in value and make sure it is valid number
+               printf("error: number invalid!\n");
+               exit(EXIT_FAILURE); 
+    }
+    printf("number of k clusters is %d\n", nclus);
+    
+    //get current working directory
+    char cwd[BUFSIZE];
+       if (getcwd(cwd, sizeof(cwd)) != NULL){
+           fprintf(stdout, "Current working dir: %s\n", cwd);
+       }else{
+           perror("getcwd() error");
+       }
+    
+    
+    //open input file "C:\\Users\\fcastrillon3\\faithful.txt"
+    FILE *fp;
+    if ((fp = fopen(file,"r")) == NULL){
+       printf("Error:cannot read the file %s\n", file);        
+    }else{
+       printf("success opening file %s\n", file); 
+    }
+    
+    //read number of items and attributes
+    int items, attributes;
+    fgets(line,BUFSIZE,fp);
+    sscanf(line,"%d%*c%d%",&items,&attributes);
+    printf ("items %d attributes %d\n", items, attributes);
+    getchar();
+    
+    //read in files to linked list
+    
+    float Cola,Colb;
+    Node *head = (Node *) malloc (sizeof(Node)); 
+    Node *node = (Node *) malloc (sizeof(Node));
+    //head->next =NULL; node->next = NULL;
+    int nvar=0;
+
+    printf("read line\n"); 
+    int i;
+    do{
+        fgets(line, BUFSIZE,fp);
+        if (feof(fp)){ /* break from the loop on end of file */
+                break;
+        }
+        //nvar ++;
+        sscanf(line,"%f%*c%f",&Cola,&Colb); /* put input character into c */
+        //printf("line %s, col 1 %lf, col 2 is %lf",line,Cone,Ctwo); 
+        node = addData(Cola,Colb,0);
+        append (head,node);                 
+    }while(1);
+    
+    node = head;
+    while(node->next != NULL){
+         node = node->next; 
+         //printf("curr node %lf, %lf, %d\n", node->col_a,node->col_b,node->kclus);      
+    }
+    
+    //get initial means
+    float *means_a = (float *)malloc(nclus*sizeof(float));
+    float *means_b = (float *)malloc(nclus*sizeof(float)); 
+    
+    int j;
+    node = head;
+    for (j=1;j<=nclus;j++){
+        node = node->next;        
+        means_a[j] = node->col_a;
+        means_b[j] = node->col_b; 
+        printf("mean %d is %f %f\n", j, means_a[j],means_b[j]);
+    }
+    //run k-means algorithm
+    //node = head;
+    //do{
+        //node = node->next;   
+    
+    float *x_sum = (float *)malloc(nclus*sizeof(float)); //sum of each column for each cluster
+    float *y_sum = (float *)malloc(nclus*sizeof(float));
+    int *x_num = (int *)malloc(nclus*sizeof(int)); //number of elements in each cluster
+    int *y_num = (int *)malloc(nclus*sizeof(int));
+  
+    
+    kmeans(head,&means_a[0],&means_b[0],nclus,&x_sum[0],&y_sum[0],&x_num[0],&y_num[0]);
+        //get_newmeans(
+        
+    //}while(node->next != NULL);
+    
+    
+    
+    getchar();    
+}
+
+
